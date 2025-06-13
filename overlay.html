@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SnipShare API Overlay Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; }
+        .overlay {
+            background: #fff;
+            max-width: 600px;
+            margin: 2em auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 2em;
+        }
+        h2 { color: #2a5d9f; }
+        label { display: block; margin-top: 1em; }
+        input, textarea, select {
+            width: 100%;
+            padding: 0.5em;
+            margin-top: 0.2em;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            font-size: 1em;
+        }
+        button { margin-top: 1em; padding: 0.5em 1.5em; border: none; border-radius: 4px; background: #2a5d9f; color: #fff; font-size: 1em; cursor: pointer; }
+        button:hover { background: #17406a; }
+        .snippet { background: #f9f9f9; border: 1px solid #eee; border-radius: 6px; padding: 1em; margin: 1em 0; }
+        .tags { color: #888; font-size: 0.95em; }
+        .upvote { color: #2a5d9f; cursor: pointer; margin-left: 1em; }
+        .upvote:hover { text-decoration: underline; }
+        .error { color: #b00; margin-top: 1em; }
+        .success { color: #080; margin-top: 1em; }
+    </style>
+</head>
+<body>
+<div class="overlay">
+    <div style="background:#e3f2fd;border:1px solid #90caf9;color:#0d47a1;padding:1em 1.5em;margin-bottom:1.5em;border-radius:6px;font-weight:bold;">
+        This /dev page is for personal testing only. Not intended for public use. BUT you can use it too if you dont want to use the API directly 
+    </div>
+    <h2>SnipShare API Overlay Test</h2>
+    <button onclick="getRandomSnippet()">Show Random Snippet</button>
+    <div id="random-snippet"></div>
+    <hr>
+    <h3>Search Snippets</h3>
+    <form id="search-form" onsubmit="searchSnippets(event)">
+        <label>Query: <input type="text" id="search-query"></label>
+        <label>Language: <input type="text" id="search-language"></label>
+        <label>Tag: <input type="text" id="search-tag"></label>
+        <button type="submit">Search</button>
+    </form>
+    <div id="search-results"></div>
+    <hr>
+    <h3>Add New Snippet</h3>
+    <form id="add-form" onsubmit="addSnippet(event)">
+        <label>Title: <input type="text" id="add-title" required></label>
+        <label>Code: <textarea id="add-code" rows="4" required></textarea></label>
+        <label>Language: <input type="text" id="add-language" required></label>
+        <label>Tags (comma separated): <input type="text" id="add-tags"></label>
+        <button type="submit">Add Snippet</button>
+    </form>
+    <div id="add-result"></div>
+</div>
+<script>
+const API = "http://127.0.0.1:9090";
+
+function renderSnippet(snippet, upvote = true) {
+    return `<div class="snippet">
+        <strong>${snippet.title}</strong> <span class="tags">[${snippet.language}] ${snippet.tags && snippet.tags.length ? snippet.tags.map(t => `#${t}`).join(' ') : ''}</span><br>
+        <pre>${snippet.code.replace(/</g, '&lt;')}</pre>
+        Upvotes: <span id="upvotes-${snippet.id}">${snippet.upvotes}</span>
+        ${upvote ? `<span class="upvote" onclick="upvoteSnippet('${snippet.id}')">&#8679; Upvote</span>` : ''}
+    </div>`;
+}
+
+function getRandomSnippet() {
+    fetch(`${API}/snippets/random`)
+        .then(r => r.json())
+        .then(snippet => {
+            document.getElementById('random-snippet').innerHTML = renderSnippet(snippet);
+        })
+        .catch(() => {
+            document.getElementById('random-snippet').innerHTML = '<div class="error">No snippets found.</div>';
+        });
+}
+
+function searchSnippets(e) {
+    e.preventDefault();
+    const q = document.getElementById('search-query').value;
+    const lang = document.getElementById('search-language').value;
+    const tag = document.getElementById('search-tag').value;
+    let url = `${API}/snippets?`;
+    if (q) url += `query=${encodeURIComponent(q)}&`;
+    if (lang) url += `language=${encodeURIComponent(lang)}&`;
+    if (tag) url += `tag=${encodeURIComponent(tag)}&`;
+    fetch(url)
+        .then(r => r.json())
+        .then(snippets => {
+            if (!snippets.length) {
+                document.getElementById('search-results').innerHTML = '<div class="error">No results found.</div>';
+                return;
+            }
+            document.getElementById('search-results').innerHTML = snippets.map(s => renderSnippet(s)).join('');
+        })
+        .catch(() => {
+            document.getElementById('search-results').innerHTML = '<div class="error">Error searching snippets.</div>';
+        });
+}
+
+function addSnippet(e) {
+    e.preventDefault();
+    const title = document.getElementById('add-title').value;
+    const code = document.getElementById('add-code').value;
+    const language = document.getElementById('add-language').value;
+    const tags = document.getElementById('add-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+    fetch(`${API}/snippets`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, code, language, tags })
+    })
+        .then(r => r.json())
+        .then(snippet => {
+            document.getElementById('add-result').innerHTML = '<div class="success">Snippet added!</div>' + renderSnippet(snippet, false);
+            document.getElementById('add-form').reset();
+        })
+        .catch(() => {
+            document.getElementById('add-result').innerHTML = '<div class="error">Error adding snippet.</div>';
+        });
+}
+
+function upvoteSnippet(id) {
+    fetch(`${API}/snippets/${id}/upvote`, { method: 'POST' })
+        .then(r => r.json())
+        .then(snippet => {
+            document.getElementById(`upvotes-${id}`).textContent = snippet.upvotes;
+        });
+}
+</script>
+</body>
+</html>
