@@ -4,7 +4,7 @@ A simple RESTful API for searching, sharing, and upvoting code snippets. Perfect
 
 **Production API Base URL:** **I STILL NOT WORKING WILL UPDATE IF CHANGES**
 ```
-https://SShare.api.syntax-xxx.is-a.dev
+https://api.syntax-xxx.is-a.dev
 ```
 
 ---
