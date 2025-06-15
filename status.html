@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uptime/Status Checker</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2em; }
+        .result { margin-top: 1em; padding: 1em; border: 1px solid #ccc; border-radius: 5px; }
+        input[type="text"] { width: 300px; padding: 0.5em; }
+        button { padding: 0.5em 1em; }
+    </style>
+</head>
+<body>
+    <h1>Uptime/Status Checker</h1>
+    <form id="statusForm">
+        <label for="url">Enter URL to check:</label>
+        <input type="text" id="url" name="url" placeholder="https://example.com" required>
+        <button type="submit">Check Status</button>
+    </form>
+    <div id="result" class="result" style="display:none;"></div>
+    <script>
+        document.getElementById('statusForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const url = document.getElementById('url').value;
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = 'Checking...';
+            try {
+                const res = await fetch(`/api/status?url=${encodeURIComponent(url)}`);
+                const data = await res.json();
+                if (data.online) {
+                    resultDiv.innerHTML = `<b>Status:</b> <span style='color:green;'>Online</span><br>
+                        <b>HTTP Status Code:</b> ${data.status_code}<br>
+                        <b>Response Time:</b> ${data.response_time} seconds`;
+                } else {
+                    resultDiv.innerHTML = `<b>Status:</b> <span style='color:red;'>Offline</span><br>
+                        <b>Error:</b> ${data.error || 'Unknown error'}<br>
+                        <b>Response Time:</b> ${data.response_time} seconds`;
+                }
+            } catch (err) {
+                resultDiv.innerHTML = `<b>Status:</b> <span style='color:red;'>Error</span><br>${err}`;
+            }
+        });
+    </script>
+</body>
+</html>

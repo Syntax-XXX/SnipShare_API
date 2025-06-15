@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, Query, Response, Depends
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel
 from typing import List, Optional
 from uuid import uuid4
@@ -9,6 +9,8 @@ from sqlalchemy import create_engine, Column, String, Integer, Table, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 import json
+import httpx
+import time
 
 app = FastAPI(title="Code Snippet Search and Share API")
 
@@ -57,6 +59,14 @@ def serve_index():
     index_path = os.path.join(os.path.dirname(__file__), "index.html")
     with open(index_path, "r", encoding="utf-8") as f:
         return Response(content=f.read(), media_type="text/html")
+
+@app.get("/home")
+def redirect_home():
+    return RedirectResponse(url="/index.html")
+
+@app.get("/developer")
+def redirect_developer():
+    return RedirectResponse(url="/overlay.html")
 
 @app.get("/dev", response_class=HTMLResponse)
 def serve_overlay():
@@ -141,3 +151,24 @@ def upvote_snippet(snippet_id: str, db: Session = Depends(get_db)):
         tags=json.loads(snippet.tags),
         upvotes=snippet.upvotes
     )
+
+@app.get("/status")
+def check_status(url: str = Query(..., description="URL to check")):
+    start = time.time()
+    try:
+        response = httpx.get(url, timeout=5)
+        elapsed = time.time() - start
+        return {
+            "url": url,
+            "online": response.status_code < 500,
+            "status_code": response.status_code,
+            "response_time": round(elapsed, 3)
+        }
+    except Exception as e:
+        elapsed = time.time() - start
+        return {
+            "url": url,
+            "online": False,
+            "error": str(e),
+            "response_time": round(elapsed, 3)
+        }
