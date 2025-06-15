@@ -68,6 +68,10 @@ def redirect_home():
 def redirect_developer():
     return RedirectResponse(url="/overlay.html")
 
+@app.get("/upt")
+def redirect_upt():
+    return RedirectResponse(url="/status.html")
+
 @app.get("/dev", response_class=HTMLResponse)
 def serve_overlay():
     overlay_path = os.path.join(os.path.dirname(__file__), "overlay.html")
