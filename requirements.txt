@@ -1,0 +1,4 @@
+fastapi
+vercel-fastapi
+sqlalchemy
+pydantic
