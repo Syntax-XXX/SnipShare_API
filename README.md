@@ -2,7 +2,7 @@
 
 A simple RESTful API for searching, sharing, and upvoting code snippets. Perfect for developers who want to quickly find and contribute reusable code.
 
-**Production API Base URL:** **I STILL NOT WORKING WILL UPDATE IF CHANGES**
+**Production API Base URL:**
 ```
 https://api.syntax-xxx.is-a.dev
 ```
