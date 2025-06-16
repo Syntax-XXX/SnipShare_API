@@ -27,7 +27,7 @@
             resultDiv.style.display = 'block';
             resultDiv.textContent = 'Checking...';
             try {
-                const res = await fetch(`/api/status?url=${encodeURIComponent(url)}`);
+                const res = await fetch(`/status?url=${encodeURIComponent(url)}`);
                 const data = await res.json();
                 if (data.online) {
                     resultDiv.innerHTML = `<b>Status:</b> <span style='color:green;'>Online</span><br>
