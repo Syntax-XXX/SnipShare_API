@@ -64,17 +64,7 @@ def serve_index():
 def redirect_home():
     return RedirectResponse(url="/index.html")
 
-@app.get("/developer")
-def redirect_developer():
-    return RedirectResponse(url="/overlay.html")
-
 @app.get("/uptime")
-def serve_overlay():
-    overlay_path = os.path.join(os.path.dirname(__file__), "status.html")
-    with open(overlay_path, "r", encoding="utf-8") as f:
-        return Response(content=f.read(), media_type="text/html")
-
-@app.get("/upt")
 def serve_overlay():
     overlay_path = os.path.join(os.path.dirname(__file__), "status.html")
     with open(overlay_path, "r", encoding="utf-8") as f:
